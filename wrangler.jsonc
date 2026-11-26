@@ -18,6 +18,11 @@
 		// Traces record the URL too (url.full, url.path). They are off by default today; this keeps them off.
 		"traces": {
 			"enabled": false
+		},
+		// Issues (error monitoring) keep "request details" of failed requests, and the docs don't say whether
+		// that includes the URL. Off, like traces.
+		"issues": {
+			"enabled": false
 		}
 	},
 	"vars": {

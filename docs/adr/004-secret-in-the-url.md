@@ -24,7 +24,7 @@ The Worker compares the token in constant time, with `crypto.subtle.timingSafeEq
 ## Consequences
 
 - Whoever has the URL can read, change and delete every note. It's pasted into every client, and rotating the token means reconnecting all of them.
-- The URL lands wherever URLs are logged. So Cloudflare's invocation logs and traces stay off, and the MCP route writes no logs (spec §7).
+- The URL lands wherever URLs are logged. So Cloudflare's invocation logs, traces and Issues stay off, and the MCP route writes no logs (spec §7).
 - A wrong token gets the same answer as a made-up route, so a scanner can't tell the server is there.
 
 ## Revisit when
