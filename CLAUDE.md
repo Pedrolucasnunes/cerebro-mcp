@@ -31,6 +31,8 @@ comment; if I can't, explain before I merge.
 1 or 2 links to the official docs behind this PR.
 ```
 
+Don't add a "Generated with Claude Code" line to the description.
+
 ## Secrets
 
 - Never in the repo, a PR, a log or a command argument. Local values go in `.dev.vars`, which is gitignored.
