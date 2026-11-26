@@ -53,7 +53,6 @@ function hint(status: number): string {
 	if (status === 401) return "The GITHUB_TOKEN secret is wrong or expired.";
 	if (status === 403) return "The GITHUB_TOKEN secret may lack Contents access to NOTES_REPO.";
 	if (status === 404) return "Check NOTES_REPO and NOTES_BRANCH in wrangler.jsonc, and that the token can read that repo.";
-	if (status === 409) return "The notes repo may be empty: GitHub has no files to list until its first commit.";
 	return "Try again in a moment.";
 }
 

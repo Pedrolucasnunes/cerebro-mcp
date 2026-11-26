@@ -27,6 +27,11 @@ export class GitHubError extends Error {
 export async function listFiles(notes: NotesRepo): Promise<string[]> {
 	const url = `https://api.github.com/repos/${notes.repo}/git/trees/${encodeURIComponent(notes.branch)}?recursive=1`;
 	const response = await fetch(url, { headers: headers(notes.token) });
+	// Before its first commit a repo has no tree, and GitHub answers 409 ("Git Repository is empty").
+	// For the notes, that's the same as a repo with no files.
+	if (response.status === 409) {
+		return [];
+	}
 	if (!response.ok) {
 		throw new GitHubError(response.status);
 	}
