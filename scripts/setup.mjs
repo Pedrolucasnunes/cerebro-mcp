@@ -3,8 +3,8 @@
 //
 //   node scripts/setup.mjs
 //
-// A Node script instead of a shell one, so it runs the same in PowerShell on Windows and in CI
-// (ADR 008). From PR 3 it also creates the Vectorize index when it's missing.
+// A Node script instead of a shell one, so it runs the same in PowerShell on Windows and on Linux,
+// where CI runs (ADR 008). From PR 3 it also creates the Vectorize index when it's missing.
 
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -38,9 +38,16 @@ function wrangler(...args) {
 	return spawnSync(process.execPath, [wranglerBin, ...args], { encoding: "utf8" });
 }
 
+/** What a failed wrangler run said, to show it as is. */
+function whatWranglerSaid(run) {
+	return (run.stderr || run.stdout || String(run.error ?? "")).trim();
+}
+
 // 1. Logged in to Cloudflare? (`whoami --json` exits with an error when you aren't.)
-if (wrangler("whoami", "--json").status !== 0) {
-	console.log("Log in to Cloudflare first: npx wrangler login");
+const whoami = wrangler("whoami", "--json");
+if (whoami.status !== 0) {
+	console.log("Couldn't confirm your Cloudflare login. If you aren't logged in: npx wrangler login");
+	console.log(`Wrangler said: ${whatWranglerSaid(whoami)}`);
 	process.exit(1);
 }
 
@@ -49,7 +56,7 @@ const listed = wrangler("secret", "list", "--format", "json");
 if (listed.status !== 0) {
 	console.log("Couldn't list the Worker's secrets. If it isn't deployed yet: merge the PR,");
 	console.log("wait for the deploy job in GitHub Actions to finish, and run this again.");
-	console.log(`Wrangler said: ${listed.stderr.trim() || listed.stdout.trim()}`);
+	console.log(`Wrangler said: ${whatWranglerSaid(listed)}`);
 	process.exit(1);
 }
 const existing = new Set(JSON.parse(listed.stdout).map((secret) => secret.name));
@@ -74,5 +81,5 @@ if (missing.length > 0) {
 }
 console.log("Everything is set. To connect the Claude app, add a custom connector with the URL");
 console.log("the deploy job printed, followed by /<MCP_TOKEN>/mcp:");
-console.log("  https://cerebro-mcp.<your-subdomain>.workers.dev/<MCP_TOKEN>/mcp");
+console.log("  https://<worker-name>.<your-subdomain>.workers.dev/<MCP_TOKEN>/mcp");
 console.log("That URL carries the token: paste it only into the connector settings.");

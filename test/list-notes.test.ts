@@ -65,6 +65,8 @@ describe.each(ERAS)("list_notes, for a %s client", (era) => {
 		github.addFile("decisoes/aprovaoab.md");
 		github.addFile("decisoes/aprovaoab-mcp.md");
 		github.addFile("projetos/cerebro-mcp.md");
+		// The prefix must start the path: this one only contains it.
+		github.addFile("arquivo/decisoes/antiga.md");
 
 		const result = await listNotes({ prefix: "decisoes/" });
 
@@ -121,6 +123,17 @@ describe.each(ERAS)("list_notes, for a %s client", (era) => {
 		expect(toolText(result)).toContain(String(status));
 		expect(toolText(result)).not.toContain(TEST_GITHUB_TOKEN);
 		expect(toolText(result)).not.toContain(TEST_MCP_TOKEN);
+	});
+
+	it("turns a network failure into a tool error that says what happened", async () => {
+		github.addFile("decisoes/aprovaoab.md");
+		github.networkDown = true;
+
+		const result = await listNotes();
+
+		expect(result.isError).toBe(true);
+		expect(toolText(result)).toContain("Network connection lost");
+		expect(toolText(result)).not.toContain(TEST_GITHUB_TOKEN);
 	});
 
 	it("says GITHUB_TOKEN is missing, without calling GitHub", async () => {

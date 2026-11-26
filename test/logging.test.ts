@@ -20,6 +20,8 @@ describe("the logs", () => {
 		await fetchWorker(`/${"f".repeat(48)}/mcp`, mcpInitialize());
 		github.failWith = 500;
 		await client.callTool({ name: "list_notes", arguments: {} });
+		github.networkDown = true;
+		await client.callTool({ name: "list_notes", arguments: {} });
 		await client.close();
 
 		for (const spy of spies) {

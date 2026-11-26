@@ -3,15 +3,17 @@
  * in place of the global one, so the Worker talks to it instead of the network.
  *
  * It behaves like the real API where the Worker depends on it: a request without the right token
- * gets 401, one without a User-Agent gets 403, and a tree read without `recursive` lists only the
- * top level. Anything that isn't api.github.com throws, so a test fails if the Worker tries to
- * reach another host.
+ * gets 401, one without a User-Agent gets 403, a repo with no files yet gets 409, and a tree read
+ * without `recursive` lists only the top level. Anything that isn't api.github.com throws, so a
+ * test fails if the Worker tries to reach another host.
  */
 export class FakeGitHub {
 	/** Every request the Worker sent, in order. */
 	readonly requests: Request[] = [];
 	/** When set, every request gets this status, as during an outage or with a revoked token. */
 	failWith: number | undefined;
+	/** When true, `fetch` throws as it does when the network fails: no response at all. */
+	networkDown = false;
 	/** Files on the branch, path to content, in the order they were added. */
 	private readonly files = new Map<string, string>();
 
@@ -30,6 +32,9 @@ export class FakeGitHub {
 		if (url.origin !== "https://api.github.com") {
 			throw new Error(`The Worker tried to reach ${url.origin}, and tests never reach the network`);
 		}
+		if (this.networkDown) {
+			throw new TypeError("Network connection lost.");
+		}
 		if (request.headers.get("Authorization") !== `Bearer ${this.repo.token}`) {
 			return errorResponse(401, "Bad credentials");
 		}
@@ -40,6 +45,10 @@ export class FakeGitHub {
 			return errorResponse(this.failWith, "Simulated failure");
 		}
 		if (request.method === "GET" && url.pathname === `/repos/${this.repo.name}/git/trees/${this.repo.branch}`) {
+			// Before its first commit a repo has no tree at all, and GitHub answers 409.
+			if (this.files.size === 0) {
+				return errorResponse(409, "Git Repository is empty.");
+			}
 			// GitHub treats any value of `recursive` as "yes", even 0 or false.
 			return Response.json(this.tree(url.searchParams.has("recursive")));
 		}

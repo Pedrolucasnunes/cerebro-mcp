@@ -33,6 +33,8 @@ export function registerListNotes(server: McpServer, env: Env): void {
 				if (error instanceof GitHubError) {
 					return toolError(`Couldn't list the notes: ${error.message}. ${hint(error.status)}`);
 				}
+				// Anything else, such as a network failure, goes up to the MCP SDK, which answers the client
+				// with a tool error carrying the error's message. Nothing is logged.
 				throw error;
 			}
 
@@ -45,10 +47,12 @@ export function registerListNotes(server: McpServer, env: Env): void {
 	);
 }
 
-/** What to check for the GitHub errors a configuration mistake causes. */
+/** What to check, for the GitHub errors a setup mistake causes. */
 function hint(status: number): string {
 	if (status === 401) return "The GITHUB_TOKEN secret is wrong or expired.";
+	if (status === 403) return "The GITHUB_TOKEN secret may lack Contents access to NOTES_REPO.";
 	if (status === 404) return "Check NOTES_REPO and NOTES_BRANCH in wrangler.jsonc, and that the token can read that repo.";
+	if (status === 409) return "The notes repo may be empty: GitHub has no files to list until its first commit.";
 	return "Try again in a moment.";
 }
 

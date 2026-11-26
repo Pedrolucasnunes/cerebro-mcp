@@ -16,7 +16,7 @@ Write the scripts as Node ES modules, `scripts/setup.mjs` and `scripts/reindex.m
 ## Alternatives considered
 
 - **Bash**: the original plan. It needs Git Bash or WSL on Windows.
-- **PowerShell**: native here, but CI would need `pwsh`, and it's one more language in the repo.
+- **PowerShell**: native here, but my machine has Windows PowerShell 5.1 and CI's Linux runners have PowerShell 7, which behave differently in places, and it's one more language in the repo.
 - **Commands inside npm scripts**: their shell syntax differs between Windows and Linux.
 - **TypeScript**: matches `src`, but needs a runner or type stripping. Plain `.mjs` runs on any Node.
 
