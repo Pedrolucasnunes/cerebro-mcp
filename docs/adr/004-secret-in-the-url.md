@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | Superseded by [ADR 010](010-token-in-a-header.md) |
 | **Date** | 2026-11-25 |
 
 ## Context
