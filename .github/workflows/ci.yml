@@ -1,0 +1,52 @@
+# Every PR: typecheck and tests. Every push to main (a merged PR): the same, then a deploy.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# The jobs only read the repo. Deploying uses the Cloudflare token, not GitHub's.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Nothing here pushes, so GitHub's token isn't kept on disk.
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  deploy:
+    # Only after a merge into main, and only if the tests passed.
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    # One deploy at a time: a newer merge waits for the running deploy instead of racing it.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v4
+        with:
+          # Set once by hand: gh secret set CLOUDFLARE_API_TOKEN. The account comes from wrangler.jsonc.
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

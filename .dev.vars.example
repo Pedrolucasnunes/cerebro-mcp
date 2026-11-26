@@ -1,0 +1,7 @@
+# Copy to .dev.vars (gitignored) to run `npx wrangler dev` against the real notes repo.
+# Fill the values in your own editor; never paste them into a chat, a commit or a command line.
+
+# Any 48 hex characters for local use. The local MCP URL is http://localhost:8787/<MCP_TOKEN>/mcp
+MCP_TOKEN=
+# A fine-grained GitHub token for the notes repo only, with Contents access.
+GITHUB_TOKEN=
