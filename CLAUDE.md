@@ -37,7 +37,7 @@ Don't add a "Generated with Claude Code" line to the description.
 
 - Never in the repo, a PR, a log or a command argument. Local values go in `.dev.vars`, which is gitignored.
 - I set production secrets myself with `npx wrangler secret put <NAME>`. Never ask me to paste one in the chat.
-- Never log request headers or URLs: every MCP request carries the token in its `Authorization` header.
+- Never log request headers or URLs: the `Authorization` header carries the MCP token, and NFR7 keeps URLs out of logs too.
 
 ## Conventions
 

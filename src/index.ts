@@ -18,10 +18,11 @@ export default {
 		}
 
 		// The MCP SDK passes the whole request, headers included, on to the server's code. Nothing there
-		// needs the token, so it stops here.
+		// needs the token, so the request handed on doesn't carry it.
 		const headers = new Headers(request.headers);
 		headers.delete("Authorization");
 		// A handler per request, so the tools get this request's env (the secrets and the vars).
+		// `route` is the handler's default, set here so its own path check uses the same constant as ours.
 		const handler = createMcpHandler(() => createServer(env), { route: MCP_PATH });
 		return handler(new Request(request, { headers }), env, ctx);
 	},

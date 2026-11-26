@@ -21,7 +21,7 @@ vi.mock("agents/mcp/server", async (importOriginal) => {
 });
 
 // The MCP SDK passes the whole request, headers included, on to the server's code. Nothing there
-// needs the token, so it stops at the Worker (ADR 010).
+// needs the token, so the request the Worker hands on doesn't carry it (ADR 010).
 describe("the request the MCP handler gets", () => {
 	it("doesn't carry the token", async () => {
 		const client = await connectMcp();

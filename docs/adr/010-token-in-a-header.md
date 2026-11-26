@@ -7,7 +7,7 @@
 
 ## Context
 
-[ADR 004](004-secret-in-the-url.md) put the MCP token in the URL, `/<MCP_TOKEN>/mcp`, because the Claude app's custom connector took only a URL. It now takes request headers too: Claude stores each value and sends it, exactly as typed, on every request to the server (a beta, which this account has). Claude Code sends headers as well (`--header`, or `headers` in `.mcp.json`). ChatGPT doesn't: its custom MCP servers offer OAuth or no authentication, nothing else.
+[ADR 004](004-secret-in-the-url.md) put the MCP token in the URL, `/<MCP_TOKEN>/mcp`, because the Claude app's custom connector took only a URL. It now takes request headers too: Claude stores each value and sends it, exactly as typed, on every request to the server (a beta, which my account has). Claude Code sends headers as well (`--header`, or `headers` in `.mcp.json`). ChatGPT doesn't: its custom MCP servers offer OAuth or no authentication, nothing else.
 
 A token in a URL gets saved and logged wherever URLs do. HTTP has a header for credentials: `Authorization`.
 
@@ -30,8 +30,8 @@ Kept from ADR 004: the webhook and the admin route get their own secrets (PR 3).
 
 - ChatGPT can't connect in v1: it has no way to send the token (spec §10; PRD, open question 3).
 - When the connector is added, Claude reports that no server answered the URL, since without the header the Worker answers `404`. "Continue anyway" leads to the manual settings, where the header goes. In Claude Code, a wrong token looks like a wrong URL ("MCP endpoint not found").
-- A connector can't be edited: a new token means removing the connector and adding it again, in every client.
-- A browser page can't connect directly: its CORS preflight carries no `Authorization` header and gets the `404`. None of my clients is one: Claude connects from Anthropic's cloud, and Claude Code from my computer.
+- A connector can't be edited: a new token means removing the connector and adding it again in the Claude app, once for all its clients, and changing any Claude Code CLI config.
+- A browser page can't connect directly: its CORS preflight carries no `Authorization` header and gets the `404` (spec §10). None of my clients is one: Claude connects from Anthropic's cloud, and Claude Code from my computer.
 - The move is also when the token gets replaced: the old one was saved in the old connector, as part of its URL.
 
 ## Revisit when
