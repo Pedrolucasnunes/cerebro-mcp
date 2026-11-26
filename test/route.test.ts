@@ -40,8 +40,10 @@ describe("the MCP route", () => {
 		["a wrong token of the same length", "/mcp", `Bearer ${"f".repeat(48)}`],
 		["a token of another length", "/mcp", "Bearer 0123456789abcdef"],
 		["the token in upper case", "/mcp", `Bearer ${TEST_MCP_TOKEN.toUpperCase()}`],
-		// Claude sends a request header exactly as typed, so the word Bearer can be left out by mistake.
+		// Claude sends a request header exactly as typed, so these three are easy typing mistakes.
 		["the token without the Bearer scheme", "/mcp", TEST_MCP_TOKEN],
+		["no space after Bearer", "/mcp", `Bearer${TEST_MCP_TOKEN}`],
+		["the header's name typed into its value", "/mcp", `Authorization: Bearer ${TEST_MCP_TOKEN}`],
 		["the token under another scheme", "/mcp", `Basic ${TEST_MCP_TOKEN}`],
 		["the Bearer scheme with no token", "/mcp", "Bearer"],
 		["the token followed by more text", "/mcp", `Bearer ${TEST_MCP_TOKEN} extra`],
@@ -62,6 +64,31 @@ describe("the MCP route", () => {
 		expect(github.requests).toHaveLength(0);
 	});
 
+	// The table above compares with the Worker's own 404, so this pins what that 404 is: nothing in it
+	// says which server answered.
+	it("answers a route that doesn't exist with a bare 404 that names nothing", async () => {
+		const response = await fetchWorker("/no-such-route", mcpInitialize());
+
+		expect(response.status).toBe(404);
+		expect([...response.headers]).toEqual([["content-type", "text/plain;charset=UTF-8"]]);
+		expect(await response.text()).toBe("Not Found");
+	});
+
+	// A test can't measure timing reliably, so this checks that the token goes through the platform's
+	// constant-time comparison, for a wrong token of the same length and for one of another length.
+	it("compares the token in constant time", async () => {
+		const timingSafeEqual = vi.spyOn(crypto.subtle, "timingSafeEqual");
+
+		for (const token of ["f".repeat(48), "0123456789abcdef"]) {
+			timingSafeEqual.mockClear();
+
+			const response = await fetchWorker("/mcp", mcpInitialize(`Bearer ${token}`));
+
+			expect(response.status).toBe(404);
+			expect(timingSafeEqual, token).toHaveBeenCalledOnce();
+		}
+	});
+
 	// Before `wrangler secret put MCP_TOKEN`, the deployed Worker must not serve anyone.
 	it.each([
 		["unset", undefined],
@@ -69,7 +96,8 @@ describe("the MCP route", () => {
 	])("answers 404 to every request while MCP_TOKEN is %s", async (_case, token) => {
 		const envWithoutToken = { ...testEnv, MCP_TOKEN: token };
 
-		for (const authorization of [undefined, "Bearer ", "Bearer undefined", `Bearer ${TEST_MCP_TOKEN}`]) {
+		// "Bearer" alone covers "Bearer " too: the platform trims a header value's trailing spaces.
+		for (const authorization of [undefined, "Bearer", "Bearer undefined", `Bearer ${TEST_MCP_TOKEN}`]) {
 			const response = await fetchWorker("/mcp", mcpInitialize(authorization), envWithoutToken);
 			expect(response.status, String(authorization)).toBe(404);
 		}
