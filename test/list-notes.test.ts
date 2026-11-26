@@ -117,8 +117,9 @@ describe.each(ERAS)("list_notes, for a %s client", (era) => {
 	});
 
 	it("answers a repo with no commits yet (GitHub's 409) like one with no notes", async () => {
-		// With no files at all, the fake answers 409, as GitHub does before a repo's first commit.
 		const noCommits = await listNotes();
+		// The case under test: GitHub's answer before a repo's first commit.
+		expect(github.statuses).toEqual([409]);
 		github.addFile("imagens/diagrama.png");
 		const noNotes = await listNotes();
 

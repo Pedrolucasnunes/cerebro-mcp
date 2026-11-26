@@ -22,13 +22,14 @@ export class GitHubError extends Error {
 
 /**
  * The path of every file on the branch, in one call: the branch's tree, read recursively.
- * Past 100,000 entries or 7 MB GitHub cuts the list short, and this reads what it got (spec §10).
+ * A repo with no commits yet gives an empty list. Past 100,000 entries or 7 MB GitHub cuts the
+ * list short, and this reads what it got (spec §10).
  */
 export async function listFiles(notes: NotesRepo): Promise<string[]> {
 	const url = `https://api.github.com/repos/${notes.repo}/git/trees/${encodeURIComponent(notes.branch)}?recursive=1`;
 	const response = await fetch(url, { headers: headers(notes.token) });
 	// Before its first commit a repo has no tree, and GitHub answers 409 ("Git Repository is empty").
-	// For the notes, that's the same as a repo with no files.
+	// Every 409 here is taken to mean that: for the notes, the same as a repo with no files.
 	if (response.status === 409) {
 		return [];
 	}

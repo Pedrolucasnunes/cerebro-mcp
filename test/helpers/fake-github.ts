@@ -3,30 +3,41 @@
  * in place of the global one, so the Worker talks to it instead of the network.
  *
  * It behaves like the real API where the Worker depends on it: a request without the right token
- * gets 401, one without a User-Agent gets 403, a repo with no files yet gets 409, and a tree read
+ * gets 401, one without a User-Agent gets 403, a repo with no commits yet gets 409, and a tree read
  * without `recursive` lists only the top level. Anything that isn't api.github.com throws, so a
  * test fails if the Worker tries to reach another host.
  */
 export class FakeGitHub {
 	/** Every request the Worker sent, in order. */
 	readonly requests: Request[] = [];
+	/** The status of every answer, in order, so a test can check which case it exercised. */
+	readonly statuses: number[] = [];
 	/** When set, every request gets this status, as during an outage or with a revoked token. */
 	failWith: number | undefined;
 	/** When true, `fetch` throws as it does when the network fails: no response at all. */
 	networkDown = false;
 	/** Files on the branch, path to content, in the order they were added. */
 	private readonly files = new Map<string, string>();
+	/** A new repo has no commits until the first file is added. */
+	private hasCommits = false;
 
 	constructor(private readonly repo: { name: string; branch: string; token: string }) {}
 
-	/** Puts a file on the branch. */
+	/** Commits a file to the branch. */
 	addFile(path: string, content = "# Nota\n"): void {
 		this.files.set(path, content);
+		this.hasCommits = true;
 	}
 
 	readonly fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
 		const request = new Request(input, init);
 		this.requests.push(request);
+		const response = this.answer(request);
+		this.statuses.push(response.status);
+		return response;
+	};
+
+	private answer(request: Request): Response {
 		const url = new URL(request.url);
 
 		if (url.origin !== "https://api.github.com") {
@@ -46,14 +57,14 @@ export class FakeGitHub {
 		}
 		if (request.method === "GET" && url.pathname === `/repos/${this.repo.name}/git/trees/${this.repo.branch}`) {
 			// Before its first commit a repo has no tree at all, and GitHub answers 409.
-			if (this.files.size === 0) {
+			if (!this.hasCommits) {
 				return errorResponse(409, "Git Repository is empty.");
 			}
 			// GitHub treats any value of `recursive` as "yes", even 0 or false.
 			return Response.json(this.tree(url.searchParams.has("recursive")));
 		}
 		return errorResponse(404, "Not Found");
-	};
+	}
 
 	/** The body of GET /repos/{owner}/{repo}/git/trees/{branch}, as GitHub documents it. */
 	private tree(recursive: boolean) {
