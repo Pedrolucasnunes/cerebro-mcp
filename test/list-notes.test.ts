@@ -61,6 +61,17 @@ describe.each(ERAS)("list_notes, for a %s client", (era) => {
 		]);
 	});
 
+	it("leaves out Markdown files in dot-folders such as .obsidian/ and .trash/, and hidden ones", async () => {
+		github.addFile("decisoes/aprovaoab.md");
+		github.addFile(".obsidian/templates/diaria.md");
+		github.addFile(".trash/ideia-velha.md");
+		github.addFile("projetos/.rascunho.md");
+
+		const result = await listNotes();
+
+		expect(paths(result)).toEqual(["decisoes/aprovaoab.md"]);
+	});
+
 	it("lists only the notes under a folder", async () => {
 		github.addFile("decisoes/aprovaoab.md");
 		github.addFile("decisoes/aprovaoab-mcp.md");
@@ -93,13 +104,26 @@ describe.each(ERAS)("list_notes, for a %s client", (era) => {
 	});
 
 	it("says which repo has no notes yet, without an error", async () => {
+		// Files, but no notes: an image, and a note in Obsidian's trash.
 		github.addFile("imagens/diagrama.png");
+		github.addFile(".trash/ideia-velha.md");
 
 		const result = await listNotes();
 
 		expect(result.isError).toBeFalsy();
 		expect(toolText(result)).toContain("test-owner/test-notes");
 		expect(toolText(result)).not.toContain("diagrama.png");
+		expect(toolText(result)).not.toContain("ideia-velha.md");
+	});
+
+	it("answers a repo with no commits yet (GitHub's 409) like one with no notes", async () => {
+		// With no files at all, the fake answers 409, as GitHub does before a repo's first commit.
+		const noCommits = await listNotes();
+		github.addFile("imagens/diagrama.png");
+		const noNotes = await listNotes();
+
+		expect(noCommits.isError).toBeFalsy();
+		expect(toolText(noCommits)).toBe(toolText(noNotes));
 	});
 
 	it("reads NOTES_REPO at NOTES_BRANCH with a single GitHub call", async () => {
