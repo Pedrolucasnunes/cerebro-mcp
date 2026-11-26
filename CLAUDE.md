@@ -42,6 +42,7 @@ comment; if I can't, explain before I merge.
 - TypeScript in strict mode, ES modules; `zod` for tool inputs.
 - English for code, docs, commit messages and tool descriptions. The notes themselves are in Portuguese.
 - Deployment-specific values live in `wrangler.jsonc`; don't hard-code them anywhere else.
+- Scripts are Node ES modules (`scripts/*.mjs`), not shell scripts, so they run the same in PowerShell on Windows and in CI (ADR 008).
 - Commit messages in the imperative, under 72 characters (`Add record_decision`).
 
 ## Commands
@@ -49,10 +50,10 @@ comment; if I can't, explain before I merge.
 | Command | What it does |
 |---|---|
 | `npm test` | Vitest, inside workerd |
-| `npm run typecheck` | `tsc --noEmit` |
+| `npm run typecheck` | Generates the Worker's types (`wrangler types`), then `tsc --noEmit` on `src` and `test` |
 | `npx wrangler dev` | Local server, reading `.dev.vars` |
-| `scripts/setup.sh` | Creates any missing Cloudflare resource (safe to re-run) |
-| `scripts/reindex.sh` | Calls `/admin/reindex` page by page until it's done |
+| `node scripts/setup.mjs` | Lists the secrets the Worker still lacks and creates any missing Cloudflare resource (safe to re-run) |
+| `node scripts/reindex.mjs` | Calls `/admin/reindex` page by page until it's done |
 
 Deploys run in CI when a PR is merged into `main`.
 
