@@ -1,0 +1,33 @@
+// The Worker's configuration. Values that depend on the deployment live here and nowhere else.
+// Secrets don't: they are set with `npx wrangler secret put <NAME>` (scripts/setup.mjs lists them).
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "cerebro-mcp",
+	"main": "src/index.ts",
+	"account_id": "ae6e1e9b9bf408a57f4c20d3e2aab788",
+	// The newest date the installed Workers runtime supports. Move it forward on purpose, in its own PR.
+	"compatibility_date": "2026-11-23",
+	// The MCP handler from the `agents` package uses AsyncLocalStorage, a Node.js API.
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true,
+		"logs": {
+			// Invocation logs record "<method> <URL>" for every request, and the URL carries MCP_TOKEN.
+			"invocation_logs": false
+		},
+		// Traces record the URL too (url.full, url.path). They are off by default today; this keeps them off.
+		"traces": {
+			"enabled": false
+		},
+		// Issues (error monitoring) keep "request details" of failed requests, and the docs don't say whether
+		// that includes the URL. Off, like traces.
+		"issues": {
+			"enabled": false
+		}
+	},
+	"vars": {
+		// The private repo with the notes, and its branch that is the source of truth.
+		"NOTES_REPO": "Pedrolucasnunes/cerebro-notas",
+		"NOTES_BRANCH": "main"
+	}
+}
