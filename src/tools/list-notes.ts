@@ -2,6 +2,7 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import type { Env } from "../env";
 import { GitHubError, listFiles } from "../github";
+import { isNote } from "../notes";
 
 export function registerListNotes(server: McpServer, env: Env): void {
 	server.registerTool(
@@ -38,7 +39,7 @@ export function registerListNotes(server: McpServer, env: Env): void {
 				throw error;
 			}
 
-			const notes = files.filter((path) => path.endsWith(".md") && path.startsWith(prefix));
+			const notes = files.filter((path) => isNote(path) && path.startsWith(prefix));
 			if (notes.length > 0) {
 				return text(notes.join("\n"));
 			}
