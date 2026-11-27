@@ -5,8 +5,9 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-// The MCP URL carries MCP_TOKEN, and Cloudflare's docs don't say whether a log line keeps the
-// request's path. So the MCP route writes no logs at all (spec §7; PRD, NFR7).
+// Logs must never hold note content, queries or secrets (PRD, NFR7), and every MCP request carries
+// MCP_TOKEN in its Authorization header. The simplest way to be sure: the MCP route writes no logs
+// at all (spec §7).
 describe("the logs", () => {
 	it("get nothing while the Worker serves, rejects or fails a request", async () => {
 		const github = fakeNotesRepo();
@@ -17,7 +18,7 @@ describe("the logs", () => {
 
 		const client = await connectMcp();
 		await client.callTool({ name: "list_notes", arguments: {} });
-		await fetchWorker(`/${"f".repeat(48)}/mcp`, mcpInitialize());
+		await fetchWorker("/mcp", mcpInitialize(`Bearer ${"f".repeat(48)}`));
 		github.failWith = 500;
 		await client.callTool({ name: "list_notes", arguments: {} });
 		github.networkDown = true;

@@ -9,18 +9,20 @@
 	"compatibility_date": "2026-11-23",
 	// The MCP handler from the `agents` package uses AsyncLocalStorage, a Node.js API.
 	"compatibility_flags": ["nodejs_compat"],
+	// Invocation logs, traces and Issues went off while the URL carried MCP_TOKEN (ADR 004). It's in the
+	// Authorization header now (ADR 010). Turning any of them back on is a decision of its own, after
+	// checking what each one records of a request's headers.
 	"observability": {
 		"enabled": true,
 		"logs": {
-			// Invocation logs record "<method> <URL>" for every request, and the URL carries MCP_TOKEN.
+			// Invocation logs record "<method> <URL>" for every request.
 			"invocation_logs": false
 		},
 		// Traces record the URL too (url.full, url.path). They are off by default today; this keeps them off.
 		"traces": {
 			"enabled": false
 		},
-		// Issues (error monitoring) keep "request details" of failed requests, and the docs don't say whether
-		// that includes the URL. Off, like traces.
+		// Issues (error monitoring) keep "request details" of failed requests. Off, like traces.
 		"issues": {
 			"enabled": false
 		}

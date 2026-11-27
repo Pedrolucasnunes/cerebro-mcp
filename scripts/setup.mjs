@@ -79,7 +79,10 @@ if (missing.length > 0) {
 	console.log("Set the missing secrets, then run this again.");
 	process.exit(1);
 }
-console.log("Everything is set. To connect the Claude app, add a custom connector with the URL");
-console.log("the deploy job printed, followed by /<MCP_TOKEN>/mcp:");
-console.log("  https://<worker-name>.<your-subdomain>.workers.dev/<MCP_TOKEN>/mcp");
-console.log("That URL carries the token: paste it only into the connector settings.");
+console.log("Everything is set. To connect the Claude app, add a custom connector with:");
+console.log("  URL: the address the deploy job printed, followed by /mcp");
+console.log("    https://<worker-name>.<your-subdomain>.workers.dev/mcp");
+console.log("  Claude says no server answered that URL: without the token the Worker answers 404.");
+console.log("  Continue anyway, choose no sign-in, and add one request header:");
+console.log("    Authorization, with the value: Bearer <MCP_TOKEN>");
+console.log("  Type the word Bearer and a space before the token: Claude sends the value as typed.");

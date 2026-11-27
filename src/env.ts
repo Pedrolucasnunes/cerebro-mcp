@@ -7,7 +7,7 @@
  * undefined. `Omit` drops any copy `wrangler types` made from .dev.vars, which would say "always set".
  */
 export type Env = Omit<Cloudflare.Env, "MCP_TOKEN" | "GITHUB_TOKEN"> & {
-	/** The 48-hex-character token in the MCP URL: /<MCP_TOKEN>/mcp. */
+	/** The 48-hex-character token clients send to /mcp as `Authorization: Bearer <MCP_TOKEN>`. */
 	MCP_TOKEN?: string;
 	/** A fine-grained GitHub token for NOTES_REPO only, with Contents access. */
 	GITHUB_TOKEN?: string;

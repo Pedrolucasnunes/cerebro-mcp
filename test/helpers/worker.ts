@@ -37,11 +37,18 @@ export function fetchWorker(pathOrUrl: string, init?: RequestInit, envOverride?:
 	return exports.default.fetch(request);
 }
 
-/** A well-formed MCP request (a 2025-era `initialize`): even a valid MCP call gets 404 at a wrong URL. */
-export function mcpInitialize(): RequestInit {
+/**
+ * A well-formed MCP request (a 2025-era `initialize`): even a valid MCP call gets 404 without the
+ * right token. `authorization` is the value of its Authorization header; without it, there's none.
+ */
+export function mcpInitialize(authorization?: string): RequestInit {
+	const headers = new Headers({ "Content-Type": "application/json", Accept: "application/json, text/event-stream" });
+	if (authorization !== undefined) {
+		headers.set("Authorization", authorization);
+	}
 	return {
 		method: "POST",
-		headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+		headers,
 		body: JSON.stringify({
 			jsonrpc: "2.0",
 			id: 1,
@@ -70,7 +77,9 @@ export async function connectMcp(options: { era?: Era; env?: Env } = {}): Promis
 		options.era === "2026-07-28" ? { versionNegotiation: { mode: { pin: "2026-07-28" } } } : {},
 	);
 	const token = (options.env ?? testEnv).MCP_TOKEN;
-	const transport = new StreamableHTTPClientTransport(new URL(`/${token}/mcp`, ORIGIN), {
+	const transport = new StreamableHTTPClientTransport(new URL("/mcp", ORIGIN), {
+		// Like a Claude connector with a request header: every request carries the token.
+		requestInit: { headers: { Authorization: `Bearer ${token}` } },
 		fetch: (url, init) => fetchWorker(String(url), init, options.env),
 	});
 	await client.connect(transport);
